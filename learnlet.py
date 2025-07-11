@@ -85,9 +85,9 @@ class Learnlet(nn.Module):
             thresh = thresholds[i] * sigma
 
             if self.thresh == 'hard':
-                x_a_t = x_a * torch.sigmoid((torch.abs(x_a) - thresh[:,None,None]) / 1e-3)
+                x_a_t = x_a * torch.sigmoid((torch.abs(x_a) - thresh.view(-1,1,1,1)) / 1e-3)
             elif self.thresh == 'soft':
-                x_a_t = torch.sign(x_a) * torch.relu(torch.abs(x_a) - thresh[:,None,None])
+                x_a_t = torch.sign(x_a) * torch.relu(torch.abs(x_a) - thresh.view(-1,1,1,1))
             else:
                 print('Not implemented thresholding')
 
