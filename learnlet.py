@@ -29,7 +29,7 @@ class NormalizeByL2(nn.Module):
 
 class Learnlet(nn.Module):
     
-    def __init__(self, n_scales=5, kernel_size=5, filters=64, exact_rec=True, thresh='hard', pretrained=True, device='cpu'):
+    def __init__(self, n_scales=5, kernel_size=5, filters=64, exact_rec=True, thresh='hard', pretrained=True, pretrained_weights_dir='./weights', device='cpu'):
         super(Learnlet, self).__init__()
 
         self.exact_rec = exact_rec
@@ -61,7 +61,7 @@ class Learnlet(nn.Module):
         self.mininet = MiniNet(n=n_scales-1)
         if pretrained is True:
             try:
-                self.load_state_dict(torch.load('weights/weights_learnlet_{}_{}_{}_{}.pth'.format(filters, kernel_size, exact_rec, thresh), map_location=torch.device(device), weights_only=True))
+                self.load_state_dict(torch.load('{}/weights_learnlet_{}_{}_{}_{}.pth'.format(pretrained_weights_dir, filters, kernel_size, exact_rec, thresh), map_location=torch.device(device), weights_only=True))
                 print(f"[info] Found pretrained weights for this configuration of parameters.")
             except (FileNotFoundError, RuntimeError):
                 print(f"[info] Couldn’t load weights for this configuration of parameters; continuing with random init.")
