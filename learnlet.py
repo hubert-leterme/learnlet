@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.utils.parametrize as parametrize
+import os
 
 
 class MiniNet(nn.Module):
@@ -61,7 +62,9 @@ class Learnlet(nn.Module):
         self.mininet = MiniNet(n=n_scales-1)
         if pretrained is True:
             try:
-                self.load_state_dict(torch.load('{}/weights_learnlet_{}_{}_{}_{}.pth'.format(pretrained_weights_dir, filters, kernel_size, exact_rec, thresh), map_location=torch.device(device), weights_only=True))
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                weights_path = os.path.join(current_dir, 'weights', 'weights_learnlet_{}_{}_{}_{}.pth'.format(filters, kernel_size, exact_rec, thresh))
+                self.load_state_dict(torch.load(weights_path, map_location=torch.device(device), weights_only=True))
                 print(f"[info] Found pretrained weights for this configuration of parameters.")
             except (FileNotFoundError, RuntimeError):
                 print(f"[info] Couldn’t load weights for this configuration of parameters; continuing with random init.")
@@ -78,16 +81,20 @@ class Learnlet(nn.Module):
             x = x_new
             
             x_a = self.convs_A[i](x_in)
-
+            
             if self.exact_rec is True:
                 x_a = torch.cat([x_in, x_a], dim=1)
-
+            
             thresh = thresholds[i] * sigma
 
+            expand_dims = x_a.dim() - thresh.dim()
+            new_shape = thresh.shape + (1,) * expand_dims
+            thresh_expanded = thresh.view(new_shape)
+            
             if self.thresh == 'hard':
-                x_a_t = x_a * torch.sigmoid((torch.abs(x_a) - thresh.view(-1,1,1,1)) / 1e-3)
+                x_a_t = x_a * torch.sigmoid((torch.abs(x_a) - thresh_expanded) / 1e-3)
             elif self.thresh == 'soft':
-                x_a_t = torch.sign(x_a) * torch.relu(torch.abs(x_a) - thresh.view(-1,1,1,1))
+                x_a_t = torch.sign(x_a) * torch.relu(torch.abs(x_a) - thresh_expanded)
             else:
                 print('Not implemented thresholding')
 
